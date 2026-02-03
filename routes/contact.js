@@ -1,19 +1,17 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Contact = require('../models/Contact');
-const sendEmail = require('../config/email');
+const Contact = require("../models/Contact");
+const sendEmail = require("../config/email");
 
-// POST endpoint to handle contact form submissions
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // Validate input
     if (!name || !email || !subject || !message) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Save to database
+    // ✅ Save to DB FIRST
     const newContact = new Contact({
       name,
       email,
@@ -23,7 +21,15 @@ router.post('/', async (req, res) => {
 
     await newContact.save();
 
-    // Send email to the person who submitted the form
+    // ✅ Respond immediately (IMPORTANT)
+    res.status(200).json({
+      success: true,
+      message: "Your message has been sent successfully!",
+    });
+
+    // ================================
+    // 🔁 EMAILS RUN IN BACKGROUND
+    // ================================
     const userEmailHtml = `
       <h2>Thank you for contacting RootOps!</h2>
       <p>Hi ${name},</p>
@@ -36,7 +42,6 @@ router.post('/', async (req, res) => {
       <p>Best regards,<br/>RootOps Team</p>
     `;
 
-    // Send email to admin
     const adminEmailHtml = `
       <h2>New Contact Form Submission</h2>
       <p><strong>Name:</strong> ${name}</p>
@@ -46,17 +51,17 @@ router.post('/', async (req, res) => {
       <p><strong>Submitted at:</strong> ${new Date().toLocaleString()}</p>
     `;
 
-    await sendEmail(email, 'Thank You for Contacting RootOps', userEmailHtml);
-    await sendEmail(process.env.ADMIN_EMAIL, `New Inquiry: ${subject}`, adminEmailHtml);
+    // Fire-and-forget emails (NO await)
+    sendEmail(email, "Thank You for Contacting RootOps", userEmailHtml)
+      .catch(err => console.error("User email failed:", err));
 
-    res.status(200).json({
-      success: true,
-      message: 'Your message has been sent successfully!',
-    });
+    sendEmail(process.env.ADMIN_EMAIL, `New Inquiry: ${subject}`, adminEmailHtml)
+      .catch(err => console.error("Admin email failed:", err));
+
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({
-      error: 'An error occurred while processing your request',
+    console.error("Contact API Error:", error);
+    return res.status(500).json({
+      error: "An error occurred while processing your request",
     });
   }
 });

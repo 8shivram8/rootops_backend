@@ -7,23 +7,30 @@ const contactRoutes = require('./routes/contact');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// ✅ CORS FIXED
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://live-rootops-technologies-project.vercel.app"
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Connect to MongoDB
 connectDB();
 
-// Routes
 app.use('/api/contact', contactRoutes);
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Backend is running' });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

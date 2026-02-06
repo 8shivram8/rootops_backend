@@ -15,11 +15,14 @@ app.use(
       "http://localhost:5173",
       "https://live-rootops-technologies-project.vercel.app",
       /^https:\/\/live-rootops-technologies-project-.*\.vercel\.app$/,
+      "https://rootopstechnologies.in",
+      "https://www.rootopstechnologies.in",
     ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
 );
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
